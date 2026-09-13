@@ -1,0 +1,11 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
+import { Locale } from '@/lib/i18n/dictionaries';
+
+export async function setLocale(locale: Locale) {
+  const cookieStore = await cookies();
+  cookieStore.set('NEXT_LOCALE', locale, { path: '/' });
+  revalidatePath('/', 'layout');
+}

@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String    @unique
+  passwordHash  String?
+  role          String    @default("USER")
+  balance       Float     @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orders        Order[]
+  transactions  Transaction[]
+  payments      Payment[]
+  tickets       Ticket[]
+  messages      TicketMessage[]
+  auditLogs     AuditLog[]
+}
+
+model Provider {
+  id               String    @id @default(cuid())
+  name             String
+  apiUrl           String
+  encryptedApiKey  String?
+  active             Boolean   @default(true)
+  defaultMarkupType  String    @default("PERCENTAGE")
+  defaultMarkupValue Float     @default(30)
+  createdAt          DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  services         Service[]
+  orders           Order[]
+}
+
+model Service {
+  id                String    @id @default(cuid())
+  providerServiceId String
+  name              String
+  platform          String
+  category          String
+  description       String?   
+  type              String?
+  minQuantity       Int
+  maxQuantity       Int
+  providerRate      Float
+  customerRate      Float
+  markupType        String    @default("PERCENTAGE")
+  markupValue       Float     @default(30)
+  refillSupported   Boolean   @default(false)
+  cancelSupported   Boolean   @default(false)
+  active            Boolean   @default(true)
+  hidden            Boolean   @default(false)
+  
+  providerId        String
+  provider          Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  orders            Order[]
+
+  @@unique([providerId, providerServiceId])
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  serviceId        String
+  service          Service     @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  
+  providerId       String?
+  provider         Provider?   @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  
+  providerOrderId  String?
+  link             String
+  quantity         Int
+  charge           Float
+  providerCost     Float     @default(0)
+  sellingPrice     Float     @default(0)
+  profit           Float     @default(0)
+  startCount       Int?
+  remains          Int?
+  status           String      @default("PENDING")
+  
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type          String
+  amount        Float
+  balanceBefore Float
+  balanceAfter  Float
+  reference     String?
+  status        String          @default("COMPLETED")
+  
+  createdAt     DateTime        @default(now())
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  provider          String
+  externalPaymentId String?
+  amount            Float
+  status            String        @default("PENDING")
+  metadata          String?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  subject     String
+  status      String         @default("OPEN")
+  priority    String         @default("MEDIUM")
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  messages    TicketMessage[]
+}
+
+model TicketMessage {
+  id          String    @id @default(cuid())
+  ticketId    String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  senderId    String
+  sender      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  message     String    
+  
+  createdAt   DateTime  @default(now())
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  action      String
+  metadata    String?
+  ip          String?
+  
+  createdAt   DateTime  @default(now())
+}

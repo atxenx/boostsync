@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# local data and workspace-only tooling
+/dev.db
+/prisma/*.db
+/generated/
+/.agents/
+/.claude/
+/.windsurf/
+/skills-lock.json
+/fix-currency.js
+/replace-currency.js
+/set-admin.js
+/scripts/create-admin.ts
