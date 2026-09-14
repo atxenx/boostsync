@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useActionState, useEffect } from 'react'
-import { Service } from '@prisma/client'
+import type { Service } from '@prisma/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
