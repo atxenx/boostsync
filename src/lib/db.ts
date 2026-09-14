@@ -1,12 +1,11 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaD1 } from '@prisma/adapter-d1'
+import { env } from 'cloudflare:workers'
 
-const adapter = new PrismaLibSql({
-  url: process.env.DATABASE_URL || 'file:./dev.db'
-})
+type BoostSyncEnv = {
+  DB: D1Database
+}
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const adapter = new PrismaD1((env as unknown as BoostSyncEnv).DB)
 
-export const db = globalForPrisma.prisma || new PrismaClient({ adapter })
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db
+export const db = new PrismaClient({ adapter })
