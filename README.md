@@ -1,76 +1,195 @@
-# SMM Panel Platform
+<div align="center">
 
-A fully-featured, production-ready SMM (Social Media Marketing) panel built with Next.js 15, React 19, Tailwind CSS, Prisma 7, and PostgreSQL.
+# ⚡ BoostSync
 
-## Features
+### A fast, mobile-first control center for social growth services
 
-- **Authentication:** Secure credential-based login and registration via Auth.js.
-- **Provider API Integration:** Modular abstract layer to connect and sync with common SMM provider APIs (e.g. `action=services`, `action=add`).
-- **Dynamic Pricing:** Fetches provider pricing and safely applies a configurable markup (e.g. +30%) for customer prices. 
-- **Customer Dashboard:** Real-time wallet balance, recent transactions, order history, and intuitive service selection form.
-- **Admin Panel:** Complete control over Users (balance adjustments with audit logs), Providers (sync trigger and management), and Orders.
-- **Wallet & Transactions:** Atomic double-entry style tracking for deposits, order payments, refunds, and admin adjustments. Prevents negative balances and double refunds.
-- **Cron Job Readiness:** An endpoint (`/api/cron/sync-orders`) ready to be hit by a cron service (Vercel Cron, cron-job.org) to poll pending order statuses and execute automatic refunds for canceled or partial orders.
-- **Payment Architecture:** Extendable payment webhooks and forms ready for integration with Stripe, crypto gateways, or regional payment systems like PromptPay.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-2563EB?style=for-the-badge&logo=cloudflare&logoColor=white)](https://boostsync-smm.atxenx.chatgpt.site)
+[![Next.js](https://img.shields.io/badge/Next.js_16-0B0F19?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React_19-087EA4?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare_D1-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/d1/)
 
-## Prerequisites
+**[Explore the live app](https://boostsync-smm.atxenx.chatgpt.site)** · **[Browse services](https://boostsync-smm.atxenx.chatgpt.site/services)**
 
-- Node.js 20+
-- PostgreSQL Database
-- Redis (optional, if you plan to add Upstash for rate-limiting)
+</div>
 
-## Installation & Setup
+---
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+## What is BoostSync?
 
-2. **Environment Variables:**
-   Rename `.env.example` to `.env` and fill in your details:
-   ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/smm_panel"
-   AUTH_SECRET="your_secure_random_secret"
-   
-   SMM_API_URL="https://provider.example.com/api/v2"
-   SMM_API_KEY="your_api_key_here"
-   SMM_PROVIDER_NAME="Main Provider"
-   
-   NEXT_PUBLIC_APP_URL="http://localhost:3000"
-   ```
+BoostSync is a modern SMM panel for discovering services, placing orders, managing wallet credit, and tracking delivery from one clean interface. It includes a customer dashboard, provider integrations, and a complete administration workspace—designed to feel natural on desktop and mobile.
 
-3. **Database Migration:**
-   Apply the Prisma schema to your PostgreSQL database:
-   ```bash
-   npx prisma generate
-   npx prisma migrate dev
-   ```
+> [!NOTE]
+> This repository is a product starter and demonstration. Connect a verified provider and a production payment gateway before using it with real funds or customer orders.
 
-4. **Run the Development Server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) with your browser.
+## Highlights
 
-## Getting Started
+| Experience | What it includes |
+| --- | --- |
+| 📱 **Mobile first** | Responsive screens, touch-friendly controls, safe-area support, and an app-style bottom navigation |
+| 🛍️ **Clear ordering** | Category and service selection, full service details, price per 1,000, quantity limits, and live totals |
+| 💳 **Wallet ledger** | Balance overview and transaction history for deposits, purchases, refunds, and adjustments |
+| 🔌 **Provider sync** | Generic SMM API adapter for importing services, submitting orders, and checking provider balances |
+| 📈 **Dynamic pricing** | Percentage or fixed markup rules with customer pricing calculated on the server |
+| 🛡️ **Admin workspace** | Manage providers, services, users, balances, orders, visibility, and availability |
+| 🌏 **Localized UI** | English and Thai language support across the public and authenticated experience |
+| ⚙️ **Automated recovery** | Order synchronization and automatic refund handling for failed provider requests |
 
-1. Go to `/register` and create an account. The first registered user automatically becomes the `ADMIN`.
-2. As an Admin, navigate to the **Dashboard** -> **Admin Panel** -> **Providers**.
-3. If you configured the `SMM_API_URL` and `KEY` in your `.env`, a default provider is initialized. Click **Sync Services** to pull in the provider's catalog and populate your database with markup pricing.
-4. As a normal User, go to **Add Funds** to simulate a deposit.
-5. Go to **New Order** to place a test order. The system will deduct balance, contact the provider API, and store the `providerOrderId`.
+## Product flow
+
+```mermaid
+flowchart LR
+    A[Customer] --> B[Choose a service]
+    B --> C[Review details & total]
+    C --> D[Place order]
+    D --> E{Provider API}
+    E -->|Accepted| F[Track fulfillment]
+    E -->|Failed| G[Automatic refund]
+    H[Admin] --> I[Sync catalog]
+    I --> B
+    H --> J[Pricing & visibility]
+    J --> B
+```
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Application | Next.js 16, React 19, TypeScript |
+| Styling | Tailwind CSS 4, Base UI, Lucide icons |
+| Authentication | Auth.js 5 with credential sessions |
+| Data | Prisma ORM 7 with the Cloudflare D1 adapter |
+| Runtime | Vinext, Vite, Cloudflare Workers |
+| Database | Cloudflare D1 / SQLite |
+| Deployment | OpenAI Sites |
+
+## Quick start
+
+### Prerequisites
+
+- Node.js 20 or newer
+- npm
+- A Cloudflare D1-compatible development environment
+
+### 1. Install
+
+```bash
+git clone <your-repository-url>
+cd smm
+npm install
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file:
+
+```env
+AUTH_SECRET="replace-with-a-long-random-secret"
+DATABASE_URL="file:./dev.db"
+
+# Optional AI-powered service helper
+GEMINI_API_KEY=""
+```
+
+Generate a strong authentication secret with:
+
+```bash
+openssl rand -hex 32
+```
+
+### 3. Prepare Prisma
+
+```bash
+npx prisma generate
+```
+
+The hosted app receives its `DB` binding from `.openai/hosting.json`. Local D1 settings live in `vite.config.ts`.
+
+### 4. Run the app
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:4000](http://localhost:4000).
+
+### 5. Create the first administrator
+
+Register the first account in a fresh database. BoostSync assigns the first user the `ADMIN` role; every account created afterward starts as `USER`.
+
+## Useful commands
+
+```bash
+npm run dev          # Start the Next.js development server on port 4000
+npm run build        # Build the Cloudflare Worker with Vinext
+npm run build:next   # Run a standard Next.js production build
+npm run lint         # Check code quality
+npx prisma generate  # Regenerate Prisma Client
+```
+
+## Project structure
+
+```text
+src/
+├── app/
+│   ├── (auth)/            # Sign in and registration
+│   ├── admin/             # Administration workspace
+│   ├── api/               # Auth, payment simulation, and scheduled sync
+│   └── dashboard/         # Customer dashboard, orders, services, and wallet
+├── components/
+│   ├── admin/             # Admin management components
+│   ├── dashboard/         # Responsive dashboard and mobile navigation
+│   └── ui/                # Reusable interface primitives
+└── lib/
+    ├── actions/           # Server actions and business workflows
+    ├── providers/         # SMM provider adapter
+    └── utils/             # Pricing and shared utilities
+
+prisma/schema.prisma       # Application data model
+drizzle/                   # D1-compatible SQL migrations
+vite.config.ts             # Vinext and Cloudflare Worker configuration
+```
+
+## Security checklist
+
+- Never commit `.env`, API keys, session secrets, or production credentials.
+- Replace the simulated checkout route before accepting real payments.
+- Encrypt provider API keys at rest; the current provider model is a starter implementation.
+- Add request rate limiting and audit sensitive administrator actions.
+- Use a payment provider with cryptographically verified webhooks.
+- Review Cloudflare D1 transaction limitations before processing real balances at scale.
 
 ## Deployment
 
-This project is optimized for deployment on Vercel.
+BoostSync is configured for OpenAI Sites and Cloudflare D1. A production build is generated with:
 
-1. Connect your GitHub repository to Vercel.
-2. Add the environment variables from your `.env` to the Vercel project settings.
-3. Vercel will automatically run `npm run build` and deploy.
-4. To enable order status polling, configure a [Vercel Cron Job](https://vercel.com/docs/cron-jobs) targeting `/api/cron/sync-orders`.
+```bash
+npm run build
+```
 
-## Important Security Notes
+The live deployment is available at **[boostsync-smm.atxenx.chatgpt.site](https://boostsync-smm.atxenx.chatgpt.site)**.
 
-- This implementation includes a simulated payment webhook route (`/api/payments/checkout-simulation`) for demonstration. In a real production deployment, **remove this simulation** and implement cryptographic signature verification for your payment gateway webhooks.
-- Ensure `AUTH_SECRET` is generated using a secure random generator (e.g. `openssl rand -hex 32`).
-- The system prevents negative balances using Prisma `$transaction` operations. Keep this architecture intact when modifying the wallet logic.
+## Contributing
+
+Contributions are welcome. Create a focused branch, keep changes small, and include verification notes with your pull request.
+
+```bash
+git checkout -b feature/your-feature
+git commit -m "Add your feature"
+git push origin feature/your-feature
+```
+
+## License
+
+No open-source license has been added yet. All rights are reserved unless a license is provided by the repository owner.
+
+---
+
+<div align="center">
+
+Built with care for a fast, clear, and friendly ordering experience.
+
+**BoostSync** · Sync your growth ⚡
+
+</div>
