@@ -15,7 +15,12 @@ export default async function DashboardPage() {
   const { dict } = await getDictionary()
   const userId = session.user.id
 
-  const [user, orders, transactions] = await Promise.all([
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const previousSevenDays = new Date(sevenDaysAgo)
+  previousSevenDays.setDate(previousSevenDays.getDate() - 7)
+
+  const [user, orders, transactions, orderStats, recentSpending, previousSpending] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: { balance: true, name: true }
@@ -24,23 +29,30 @@ export default async function DashboardPage() {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 5,
-      include: { service: true }
+      include: { service: { select: { name: true } } }
     }),
     db.transaction.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 6
+    }),
+    db.order.groupBy({
+      by: ['status'],
+      where: { userId },
+      _count: { _all: true },
+      _sum: { charge: true }
+    }),
+    db.transaction.aggregate({
+      where: { userId, createdAt: { gte: sevenDaysAgo }, type: 'ORDER_PAYMENT' },
+      _sum: { amount: true }
+    }),
+    db.transaction.aggregate({
+      where: { userId, createdAt: { gte: previousSevenDays, lt: sevenDaysAgo }, type: 'ORDER_PAYMENT' },
+      _sum: { amount: true }
     })
   ])
 
   if (!user) redirect('/login')
-
-  const orderStats = await db.order.groupBy({
-    by: ['status'],
-    where: { userId },
-    _count: { _all: true },
-    _sum: { charge: true }
-  })
 
   let totalOrders = 0
   let activeOrders = 0
@@ -54,23 +66,8 @@ export default async function DashboardPage() {
     }
   })
 
-  // Get transactions from last 7 days
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const recentTxs = await db.transaction.findMany({
-    where: { userId, createdAt: { gte: sevenDaysAgo }, type: 'ORDER_PAYMENT' },
-    orderBy: { createdAt: 'asc' }
-  })
-  
-  // Calculate trend
-  const previousSevenDays = new Date(sevenDaysAgo)
-  previousSevenDays.setDate(previousSevenDays.getDate() - 7)
-  const previousTxs = await db.transaction.findMany({
-    where: { userId, createdAt: { gte: previousSevenDays, lt: sevenDaysAgo }, type: 'ORDER_PAYMENT' },
-  })
-
-  const currentPeriodSpent = recentTxs.reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
-  const previousPeriodSpent = previousTxs.reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+  const currentPeriodSpent = Math.abs(recentSpending._sum.amount ?? 0)
+  const previousPeriodSpent = Math.abs(previousSpending._sum.amount ?? 0)
   
   const spentTrend = previousPeriodSpent > 0 
     ? ((currentPeriodSpent - previousPeriodSpent) / previousPeriodSpent) * 100 

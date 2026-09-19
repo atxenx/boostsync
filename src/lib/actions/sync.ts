@@ -28,18 +28,18 @@ export async function syncServices(providerId: string) {
     let created = 0
     let updated = 0
 
+    // Read the catalog once instead of making a lookup for every remote service.
+    const existingServices = await db.service.findMany({
+      where: { providerId },
+      select: { id: true, providerServiceId: true }
+    })
+    const servicesByProviderId = new Map(existingServices.map(service => [service.providerServiceId, service]))
+
     // Helper to safely parse truthy values from APIs
     const isTrue = (val: any) => val === true || val === 'true' || val === 1 || val === '1'
 
     for (const ps of providerServices) {
-      const existingService = await db.service.findUnique({
-        where: {
-          providerId_providerServiceId: {
-            providerId,
-            providerServiceId: String(ps.service)
-          }
-        }
-      })
+      const existingService = servicesByProviderId.get(String(ps.service))
 
       const pRate = parseFloat(ps.rate)
 
@@ -60,7 +60,7 @@ export async function syncServices(providerId: string) {
         })
         updated++
       } else {
-        await db.service.create({
+        const newService = await db.service.create({
           data: {
             providerId,
             providerServiceId: String(ps.service),
@@ -79,6 +79,7 @@ export async function syncServices(providerId: string) {
             active: true
           }
         })
+        servicesByProviderId.set(newService.providerServiceId, newService)
         created++
       }
     }
